@@ -1,0 +1,49 @@
+---
+version: "3.3"
+services:
+  nifi:
+    image: apache/nifi:1.4.0
+    ports:
+      - 8080-8081:8080-8081
+      - 9999:9999
+    volumes:
+      - type: bind
+        source: ./nifi/conf
+        target: /opt/nifi/nifi-1.4.0/conf
+      - type: bind
+        source: ./nifi/logs
+        target: /opt/nifi/nifi-1.4.0/logs
+      - type: bind
+        source: ./lib
+        target: /opt/nifi/lib
+      - type: bind
+        source: ./scripts
+        target: /opt/nifi/scripts
+      - type: bind
+        source: ./assets
+        target: /opt/nifi/assets     
+    links:
+      - localstack
+      - database
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - 4567-4582:4567-4582
+      - 8888:8080
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data/localstack:/tmp/localstack:rw
+    environment:
+      SERVICES: "sqs,sns"
+      DATA_DIR: /tmp/localstack/data
+      HOSTNAME_EXTERNAL: localstack
+  database:
+    image: mysql:5.6
+    ports:
+      - 3306:3306
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: app
+    volumes:
+      - ./data/mysql:/var/lib/mysql
